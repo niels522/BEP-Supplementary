@@ -1,0 +1,29 @@
+﻿;Changes to nanoFeatures
+Line;reason
+4-133;GUI elements added to app for new features
+305;"Restructured fiducial distance storage; Originally, the app would copy the entire matrix of the fiducials centers and try to overwrite it with the fiducial distances of consecutive channels. However, since the distances were calculated from the ‘next channel’, the matrix would be overwritten with the number of fiducials not in the current channel, but that of the next. Now skip the first column to ensure we overwrite every cell of the matrix."
+;Example of bug: 2-channel alignment has 6 fiducials in the first channel and 2 fiducials in the second channel. The center matrix would then have 6 entries in the first column and two in the second. For each of the fiducials in channel 2, the shortest distance to the fiducials in channel 1 is calculated and stored in the first two entries of the distance matrix. The remaining four entries would remain as being the cluster center coordinates, not a shortest distance. Following outlier removal might even discard the two distances since they are way smaller than the four coordinates, which are multiple orders of magnitude larger.
+;Example with bugfix: the new distance matrix is only one column, with two entries, both of which will get overwritten with the shortest distance of the each of the two fiducials to the six fiducials in channel 1. This means there will be no artifacts of the original center coordinates.
+309;For loop was prone to errors by using length(X), which returns the length of the largest dimension of X, which can be either the number of channels or the number of distances. By using size(X,1), we ensure we always consider the number of distances.
+;Example of bug: 3-channel alignment has 4 fiducials in the first channel, 2 fiducials in the second channel and 4 fiducials in the third channel. The center coordinates matrix then has three columns with 4, 2 and 4 entries respectively. The first channel is always skipped, so the first loop size (over the second channel) would be the three, since there are more channels than fiducials, causing a loop out-of-bounds error.
+;Example with bugfix: By directly asking for the number of rows, the loop size would be 2, equal to the number of fiducials to be checked.
+313-322;Added the maximum alignment distance check. If the distance between two fiducials is greater than the user-defined maximum alignment distance, the distance is removed.
+323;Added user feedback by displaying the number of discarded fiducials.
+419+;Reorder channel naming, such that channel names are not overwritten every iteration of the loop over the nine sections.
+467-475;Example of bug: in a negative control measurement channel, the last section contains no entries for that channel due to a lack of signal. Since the channel names are extracted from this section, the channel of the negative control measurement is not taken into account in the rest of the app.
+;Example with bugfix: Since the channel names from all sections are concatenated before filtering on unique entries, the negative control channel is not overwritten and remains to be considered in the dataset.
+480+;Added x- and y-coordinates of cluster centers to the final output matrix since they help with cluster identification and image generation.
+606;
+482-483;Changed name ‘title’ to ‘featureNames’, since variablename ‘title’ overwrites the MATLAB function ‘title()’, which is used later on.
+485-486+ 505+ 618;Relocated writing the feature matrix until after qPAINT analysis
+987-990;
+684+ 692;Changed cluster numbering in figure generation. Originally, clusters were annotated with their number in their own section, but now they are annotated to match their numbering in the final output matrix.
+702-985;Added qPAINT analysis
+994-997;Added code to write an extra text file containing the order of files imported as a control for the user (on request).
+1175-1224;Add features to qPAINT checkbox GUI element: now it disables the fields when qPAINT is disabled, ensuring the user doesn’t accidentally forget to check the box when analyzing a file.
+1659-2418;Automatically generated code for small additions or changes to the GUI.
+;
+;Change to Cluster1
+Line;reason
+107-111;Added a check to allow for single-fiducial channel alignment. Originally, Cluster1 would always check whether all clusters are far away enough from each other, in order to filter out aggregates. However, this would be impossible when only a single cluster is present since there is no other cluster to check its distance to. Now this check is skipped when only a single cluster is present, removing the bug.
+;
